@@ -68,6 +68,26 @@
 
         <!-- Action Button -->
         <button id="nextBtn" class="btn-primary" disabled>下一步</button>
+
+        <!-- History View (Initially Hidden) -->
+        <section id="history-view" class="hidden" style="flex: 1; overflow-y: auto;">
+            <div class="section-title">我的預約紀錄</div>
+            <div id="booking-history" class="item-list">
+                <!-- History injected here -->
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+          <div class="nav-item active" onclick="switchView('booking')" id="nav-booking">
+             <span style="font-size: 18px;">📅</span>
+             <div>我要預約</div>
+          </div>
+          <div class="nav-item" onclick="switchView('history')" id="nav-history">
+             <span style="font-size: 18px;">📋</span>
+             <div>預約紀錄</div>
+          </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

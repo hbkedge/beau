@@ -2,7 +2,7 @@
  * LINE Beauty Reservation System - Frontend Logic
  */
 
-const GAS_APP_URL = 'https://script.google.com/macros/s/AKfycbztR_WF-aBLW24jBZFfiUQRdy3QlXlrioAktTvgerIERlHPgQqPUCvDyf-24CdtYXcviA/exec';
+const GAS_APP_URL = 'https://script.google.com/macros/s/REPLACE_WITH_DEPLOYED_GAS_ID/exec';
 
 let currentStep = 1;
 let selectedData = {
@@ -12,7 +12,7 @@ let selectedData = {
   time: null,
   amount: 0,
   duration: 60,
-  userId: 'MOCK_USER_ID', // Replaced by LIFF data
+  userId: 'MOCK_USER_ID', 
   userName: 'MOCK_USER_NAME'
 };
 
@@ -21,24 +21,54 @@ let selectedData = {
  */
 async function initLiff() {
   try {
-    await liff.init({ liffId: 'https://liff.line.me/2009603120-0Fkrf3bm' });
+    await liff.init({ liffId: 'REPLACE_WITH_LIFF_ID' });
     if (!liff.isLoggedIn()) {
       liff.login();
     } else {
       const profile = await liff.getProfile();
       selectedData.userId = profile.userId;
       selectedData.userName = profile.displayName;
+      
+      // Update User Profile in GAS (Module 3 CRM)
+      await apiPost('updateUser', { userId: profile.userId, displayName: profile.displayName });
+      
       loadDesigners();
     }
   } catch (err) {
     console.error('LIFF Init Error:', err);
-    // For local dev, load mock data
-    loadDesigners();
+    loadDesigners(); // For dev
   }
 }
 
 /**
- * Data Fetching
+ * Tab/View Controller
+ */
+function switchView(view) {
+   const bookingEls = ['step1', 'step2', 'step3', 'step4', 'nextBtn', 's1', 's2', 's3', 's4'];
+   const historySection = document.getElementById('history-view');
+   const indicators = document.querySelector('.step-indicator');
+
+   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+   if (view === 'booking') {
+      document.getElementById('nav-booking').classList.add('active');
+      historySection.classList.add('hidden');
+      indicators.classList.remove('hidden');
+      document.getElementById(`step${currentStep}`).classList.remove('hidden');
+      document.getElementById('nextBtn').classList.remove('hidden');
+   } else {
+      document.getElementById('nav-history').classList.add('active');
+      historySection.classList.remove('hidden');
+      indicators.classList.add('hidden');
+      // Hide all steps
+      [1,2,3,4].forEach(i => document.getElementById(`step${i}`).classList.add('hidden'));
+      document.getElementById('nextBtn').classList.add('hidden');
+      loadHistory();
+   }
+}
+
+/**
+ * Step 1-3 Data Fetchers (Omit for clarity if no changes, but I'll keep them)
  */
 async function apiGet(action, params = {}) {
   const query = new URLSearchParams({ action, ...params }).toString();
@@ -58,9 +88,6 @@ async function apiPost(action, data) {
   throw new Error(result.error);
 }
 
-/**
- * Step 1: Designer Selection
- */
 async function loadDesigners() {
   const container = document.getElementById('designer-list');
   try {
@@ -84,9 +111,6 @@ function selectDesigner(id, name) {
   document.getElementById('nextBtn').disabled = false;
 }
 
-/**
- * Step 2: Service Selection
- */
 async function loadServices() {
   const container = document.getElementById('service-list');
   try {
@@ -100,9 +124,7 @@ async function loadServices() {
         </div>
       </div>
     `).join('');
-  } catch (err) {
-    container.innerHTML = '無法加載數據';
-  }
+  } catch (err) { container.innerHTML = '無法加載數據'; }
 }
 
 function selectService(name, price, duration) {
@@ -110,27 +132,21 @@ function selectService(name, price, duration) {
   selectedData.amount = price;
   selectedData.duration = duration;
   document.querySelectorAll('.item-list .card').forEach(c => c.classList.remove('selected'));
-  document.getElementById(`s-${name}`).classList.add('selected');
+  document.getElementById(`s-${name.replace(/ /g,'')}`).classList.add('selected');
   document.getElementById('nextBtn').disabled = false;
 }
 
-/**
- * Step 3: Slot Selection
- */
 async function loadSlots() {
   const container = document.getElementById('slot-list');
   const dateStr = document.getElementById('dateInput').value;
   if (!dateStr) return;
-  
   selectedData.date = dateStr;
   try {
     const slots = await apiGet('getAvailableSlots', { designerId: selectedData.designerId, date: dateStr });
     container.innerHTML = slots.map(s => `
       <div class="slot" onclick="selectSlot('${s}')" id="t-${s.replace(':','')}">${s}</div>
     `).join('');
-  } catch (err) {
-    container.innerHTML = '無法加載數據';
-  }
+  } catch (err) { container.innerHTML = '無法加載數據'; }
 }
 
 function selectSlot(time) {
@@ -141,6 +157,46 @@ function selectSlot(time) {
 }
 
 /**
+ * Booking History Logic (Module 3)
+ */
+async function loadHistory() {
+  const container = document.getElementById('booking-history');
+  container.innerHTML = '<div style="text-align:center; padding: 20px;">載入中...</div>';
+  try {
+    const bookings = await apiGet('getBookings', { userId: selectedData.userId });
+    if (bookings.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: grey;">尚無預約紀錄</div>';
+      return;
+    }
+    container.innerHTML = bookings.map(b => {
+       const bDate = new Date(b.DateTime);
+       const isCancelable = (bDate - new Date()) > 24 * 60 * 60 * 1000;
+       return `
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight:600; color: var(--primary);">${b.ServiceName}</div>
+              <small style="color: grey;">${b.DesignerID} | ${b.DateTime}</small>
+            </div>
+            <span class="status-badge ${b.Status.toLowerCase().replace(/ /g,'-')}">${b.Status}</span>
+          </div>
+          ${(b.Status === 'Pending' || b.Status === 'Confirmed') && isCancelable ? 
+            `<button class="btn-cancel" onclick="cancelBooking('${b.ID}')">取消預約</button>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) { container.innerHTML = '無法載入紀錄'; }
+}
+
+async function cancelBooking(bookingId) {
+  if (!confirm('確定要取消這項預約嗎？\n(提前 24 小時前取消不扣款)')) return;
+  try {
+    await apiPost('cancelBooking', { bookingId, userId: selectedData.userId });
+    loadHistory();
+  } catch (err) { alert('取消失敗：' + err.message); }
+}
+
+/**
  * Navigation Logic
  */
 document.getElementById('nextBtn').onclick = () => {
@@ -148,15 +204,14 @@ document.getElementById('nextBtn').onclick = () => {
     finalizeBooking();
     return;
   }
-  
   if (currentStep === 1 && selectedData.designerId) {
     loadServices();
     transitionStep(1, 2);
   } else if (currentStep === 2 && selectedData.serviceName) {
     transitionStep(2, 3);
   } else if (currentStep === 3 && selectedData.time) {
-    showSummary();
     transitionStep(3, 4);
+    showSummary();
   }
 };
 
@@ -193,33 +248,39 @@ async function finalizeBooking() {
   try {
     const btn = document.getElementById('nextBtn');
     btn.disabled = true;
-    btn.innerText = '正在預約中...';
+    btn.innerText = '正在處理支付...';
+    
+    // Auto-calculate end time
+    const start = new Date(`${selectedData.date} ${selectedData.time}`);
+    const end = new Date(start.getTime() + selectedData.duration * 60 * 1000);
     
     const payload = {
       ...selectedData,
       dateTime: `${selectedData.date} ${selectedData.time}`,
-      name: selectedData.userName
+      name: selectedData.userName,
+      endTime: end.toISOString()
     };
     
     await apiPost('createBooking', payload);
     
-    // Success State
     document.getElementById('app').innerHTML = `
       <div class="card" style="text-align: center; margin-top: 50px;">
         <div style="font-size: 60px; color: var(--primary); margin-bottom: 20px;">✓</div>
-        <h2>預約成功！</h2>
-        <p style="color: grey; margin: 15px 0;">我們已收到您的資訊，並發送通知到您的 LINE。</p>
-        <button class="btn-primary" onclick="liff.closeWindow()">返回 LINE</button>
+        <h2>預約與支付成功！</h2>
+        <p style="color: grey; margin: 15px 0;">感謝您的預約，系統已自動為您排班。</p>
+        <button class="btn-primary" onclick="liff.closeWindow()">關閉並返回 LINE</button>
       </div>
     `;
   } catch (err) {
-    alert('預約失敗：' + err.message);
+    alert('操作失敗：' + err.message);
     document.getElementById('nextBtn').disabled = false;
   }
 }
 
-// Event Listeners
+// Listeners
 document.getElementById('dateInput').addEventListener('change', loadSlots);
+window.switchView = switchView;
+window.cancelBooking = cancelBooking;
 
-// Initial Load
+// Load
 initLiff();
