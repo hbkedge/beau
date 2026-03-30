@@ -2,7 +2,7 @@
  * LINE Beauty Reservation System - Frontend Logic
  */
 
-const GAS_APP_URL = 'https://script.google.com/macros/s/REPLACE_WITH_DEPLOYED_GAS_ID/exec';
+const GAS_APP_URL = 'https://script.google.com/macros/s/AKfycbztR_WF-aBLW24jBZFfiUQRdy3QlXlrioAktTvgerIERlHPgQqPUCvDyf-24CdtYXcviA/exec';
 
 let currentStep = 1;
 let selectedData = {
@@ -21,7 +21,7 @@ let selectedData = {
  */
 async function initLiff() {
   try {
-    await liff.init({ liffId: 'REPLACE_WITH_LIFF_ID' });
+    await liff.init({ liffId: 'https://liff.line.me/2009603120-0Fkrf3bm' });
     if (!liff.isLoggedIn()) {
       liff.login();
     } else {
