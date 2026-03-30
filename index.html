@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>線上美學預約系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>BEAUTIFY </h1>
+            <p class="subtitle">專業美學 ‧ 極致享受</p>
+        </header>
+
+        <!-- Progress Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="s1">1</div>
+            <div class="step" id="s2">2</div>
+            <div class="step" id="s3">3</div>
+            <div class="step" id="s4">4</div>
+        </div>
+
+        <!-- Step 1: Designer Selection -->
+        <section id="step1" class="card">
+            <div class="section-title">選擇您的設計師 / 美容師</div>
+            <div id="designer-list" class="item-grid">
+                <!-- Designers injected here -->
+                <div class="loading">正在提取專業人才...</div>
+            </div>
+        </section>
+
+        <!-- Step 2: Service Selection -->
+        <section id="step2" class="card hidden">
+            <div class="section-title">選擇服務項目</div>
+            <div id="service-list" class="item-list">
+                <!-- Services injected here -->
+            </div>
+        </section>
+
+        <!-- Step 3: Date & Time Selection -->
+        <section id="step3" class="card hidden">
+            <div class="section-title">選擇日期</div>
+            <input type="date" id="dateInput" class="card" style="width: 100%; border: none; background: rgba(0,0,0,0.3); color: white; margin-bottom: 20px;">
+            
+            <div class="section-title">選擇預約時段</div>
+            <div id="slot-list" class="slot-grid">
+                <!-- Slots injected here -->
+            </div>
+        </section>
+
+        <!-- Step 4: Summary & Confirm -->
+        <section id="step4" class="card hidden">
+            <div class="section-title">確認預約資訊</div>
+            <div id="summary" class="item-list" style="margin-bottom: 20px;">
+                <!-- Summary content here -->
+            </div>
+            <div class="card" style="background: rgba(212, 175, 55, 0.05); text-align: center;">
+              📢 本預約需預付 <b>NT$ 500</b> 訂金<br>
+              <small style="color: grey;">取消預訂需於 24 小時前告知</small>
+            </div>
+        </section>
+
+        <!-- Action Button -->
+        <button id="nextBtn" class="btn-primary" disabled>下一步</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
