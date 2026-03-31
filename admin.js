@@ -114,10 +114,12 @@ function renderBookings(bookings) {
   `).join('');
 }
 
+let designersCache = []; // Store designers locally for easy lookup
+
 function renderDesignerAdmin(designers) {
+    designersCache = designers; // Cache the data
     const container = document.getElementById('designer-list-admin');
-    if (!container) return;
-    if (!designers) return;
+    if (!container || !designers) return;
 
     container.innerHTML = designers.map(d => `
         <tr>
@@ -136,7 +138,7 @@ function renderDesignerAdmin(designers) {
             </td>
             <td>
                 <div style="display: flex; gap: 5px;">
-                    <button class="btn-primary" style="padding: 5px 10px; font-size: 12px; margin: 0; width: auto;" onclick="openEditModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">編輯</button>
+                    <button class="btn-primary" style="padding: 5px 10px; font-size: 12px; margin: 0; width: auto;" onclick="openEditModal('${d.ID}')">編輯</button>
                     <button class="btn-primary" style="padding: 5px 10px; font-size: 12px; margin: 0; width: auto; background: #c0392b;" onclick="deleteDesigner('${d.ID}')">刪除</button>
                 </div>
             </td>
@@ -144,17 +146,42 @@ function renderDesignerAdmin(designers) {
     `).join('');
 }
 
-window.openEditModal = function (d) {
-    document.getElementById('modalTitle').innerText = '編輯設計師';
-    document.getElementById('editDesignerId').value = d.ID;
-    document.getElementById('designerName').value = d.Name;
-    document.getElementById('designerSpecialty').value = d.Specialty;
-    document.getElementById('designerStartHour').value = d.StartHour || '10';
-    document.getElementById('designerEndHour').value = d.EndHour || '20';
-    document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
-    document.getElementById('designerSlotInterval').value = d.SlotInterval || '30';
-    document.getElementById('designerPhoto').value = d.Photo;
-    document.getElementById('designerModal').classList.remove('hidden');
+window.openEditModal = function (id) {
+    console.log('Attempting to open edit modal for ID:', id);
+    if (!designersCache || designersCache.length === 0) {
+        console.error('Designers cache is empty! Attempting to reload...');
+        loadData().then(() => openEditModal(id));
+        return;
+    }
+
+    const d = designersCache.find(x => x.ID === id);
+    if (!d) {
+        console.error('Designer not found in cache for ID:', id);
+        alert('找不到該人員資料，請整理頁面重試');
+        return;
+    }
+
+    try {
+        document.getElementById('modalTitle').innerText = '編輯設計師';
+        document.getElementById('editDesignerId').value = d.ID || '';
+        document.getElementById('designerName').value = d.Name || '';
+        document.getElementById('designerSpecialty').value = d.Specialty || '';
+        document.getElementById('designerStartHour').value = d.StartHour || '10';
+        document.getElementById('designerEndHour').value = d.EndHour || '20';
+        document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
+        document.getElementById('designerSlotInterval').value = d.SlotInterval || '30';
+        document.getElementById('designerPhoto').value = d.Photo || '';
+
+        const modal = document.getElementById('designerModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            console.log('Modal opened successfully');
+        } else {
+            console.error('Modal element #designerModal not found!');
+        }
+    } catch (err) {
+        console.error('Error filling modal data:', err);
+    }
 }
 
 window.addDesigner = function () {
