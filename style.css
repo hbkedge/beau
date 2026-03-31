@@ -26,16 +26,18 @@ body {
   color: var(--text);
   line-height: 1.6;
   overflow-x: hidden;
-  height: 100vh;
+  /* Allow scrolling on body */
+  min-height: 100vh;
 }
 
 #app {
   max-width: 480px;
   margin: 0 auto;
-  height: 100%;
-  padding: 20px;
+  min-height: 100vh;
+  padding: 20px 20px 120px 20px; /* Space for fixed bottom nav and button */
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* Glassmorphism Card Style */
