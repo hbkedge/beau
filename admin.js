@@ -123,9 +123,9 @@ function renderDesignerAdmin(designers) {
         <tr>
             <td><small>${d.ID}</small></td>
             <td><img src="${d.Photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/40'"></td>
-            <td>${d.Name}</td>
+            <td><strong>${d.Name}</strong></td>
             <td>${d.Specialty}</td>
-            <td><small>${d.WorkingHours || '--'}</small></td>
+            <td><small>${d.StartHour || '10'}:00 - ${d.EndHour || '20'}:00</small></td>
             <td><small>${d.OffDays || '--'}</small></td>
             <td><small>${d.SlotInterval || 30}m</small></td>
             <td>
@@ -149,7 +149,8 @@ window.openEditModal = function (d) {
     document.getElementById('editDesignerId').value = d.ID;
     document.getElementById('designerName').value = d.Name;
     document.getElementById('designerSpecialty').value = d.Specialty;
-    document.getElementById('designerWorkingHours').value = d.WorkingHours || '10:00-20:00';
+    document.getElementById('designerStartHour').value = d.StartHour || '10';
+    document.getElementById('designerEndHour').value = d.EndHour || '20';
     document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
     document.getElementById('designerSlotInterval').value = d.SlotInterval || '30';
     document.getElementById('designerPhoto').value = d.Photo;
@@ -161,7 +162,8 @@ window.addDesigner = function () {
     document.getElementById('editDesignerId').value = '';
     document.getElementById('designerName').value = '';
     document.getElementById('designerSpecialty').value = '';
-    document.getElementById('designerWorkingHours').value = '10:00-20:00';
+    document.getElementById('designerStartHour').value = '10';
+    document.getElementById('designerEndHour').value = '20';
     document.getElementById('designerOffDays').value = 'Monday';
     document.getElementById('designerSlotInterval').value = '30';
     document.getElementById('designerPhoto').value = '';
@@ -176,7 +178,8 @@ window.saveDesigner = async function () {
     const id = document.getElementById('editDesignerId').value;
     const name = document.getElementById('designerName').value;
     const specialty = document.getElementById('designerSpecialty').value;
-    const workingHours = document.getElementById('designerWorkingHours').value;
+    const startHour = document.getElementById('designerStartHour').value;
+    const endHour = document.getElementById('designerEndHour').value;
     const offDays = document.getElementById('designerOffDays').value;
     const slotInterval = document.getElementById('designerSlotInterval').value;
     const photo = document.getElementById('designerPhoto').value;
@@ -187,7 +190,7 @@ window.saveDesigner = async function () {
     }
 
     try {
-        await apiPost('updateDesigner', { id, name, specialty, workingHours, offDays, slotInterval, photo });
+        await apiPost('updateDesigner', { id, name, specialty, startHour, endHour, offDays, slotInterval, photo });
         closeModal();
         loadData();
     } catch (err) {
