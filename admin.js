@@ -127,6 +127,7 @@ function renderDesignerAdmin(designers) {
             <td>${d.Specialty}</td>
             <td><small>${d.WorkingHours || '--'}</small></td>
             <td><small>${d.OffDays || '--'}</small></td>
+            <td><small>${d.SlotInterval || 30}m</small></td>
             <td>
                 <select onchange="updateDesignerField('${d.ID}', 'status', this.value)">
                     <option value="Active" ${d.Status === 'Active' ? 'selected' : ''}>🟢 在職</option>
@@ -150,6 +151,7 @@ window.openEditModal = function (d) {
     document.getElementById('designerSpecialty').value = d.Specialty;
     document.getElementById('designerWorkingHours').value = d.WorkingHours || '10:00-20:00';
     document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
+    document.getElementById('designerSlotInterval').value = d.SlotInterval || '30';
     document.getElementById('designerPhoto').value = d.Photo;
     document.getElementById('designerModal').classList.remove('hidden');
 }
@@ -161,6 +163,7 @@ window.addDesigner = function () {
     document.getElementById('designerSpecialty').value = '';
     document.getElementById('designerWorkingHours').value = '10:00-20:00';
     document.getElementById('designerOffDays').value = 'Monday';
+    document.getElementById('designerSlotInterval').value = '30';
     document.getElementById('designerPhoto').value = '';
     document.getElementById('designerModal').classList.remove('hidden');
 }
@@ -175,6 +178,7 @@ window.saveDesigner = async function () {
     const specialty = document.getElementById('designerSpecialty').value;
     const workingHours = document.getElementById('designerWorkingHours').value;
     const offDays = document.getElementById('designerOffDays').value;
+    const slotInterval = document.getElementById('designerSlotInterval').value;
     const photo = document.getElementById('designerPhoto').value;
 
     if (!name || !specialty) {
@@ -183,7 +187,7 @@ window.saveDesigner = async function () {
     }
 
     try {
-        await apiPost('updateDesigner', { id, name, specialty, workingHours, offDays, photo });
+        await apiPost('updateDesigner', { id, name, specialty, workingHours, offDays, slotInterval, photo });
         closeModal();
         loadData();
     } catch (err) {

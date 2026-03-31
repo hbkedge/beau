@@ -121,11 +121,15 @@ async function loadServices() {
   const container = document.getElementById('service-list');
   try {
     const services = await apiGet('getServices');
-    // FILTER: Service.Category must match Designer.Specialty
-    const filtered = services.filter(s => s.Category === selectedData.designerSpecialty);
+    // FUZZY MATCH: Allow matching "美甲" with "美甲師"
+    const filtered = services.filter(s => {
+      const cat = (s.Category || "").trim();
+      const spec = (selectedData.designerSpecialty || "").trim();
+      return cat.includes(spec) || spec.includes(cat);
+    });
 
     if (filtered.length === 0) {
-      container.innerHTML = `<div style="padding: 20px; color: grey;">目前無適合 ${selectedData.designerSpecialty} 的服務</div>`;
+      container.innerHTML = `<div style="padding: 20px; color: grey;">目前無適合 ${selectedData.designerSpecialty} 的服務<br><small>請確認分類是否正確</small></div>`;
       return;
     }
 
