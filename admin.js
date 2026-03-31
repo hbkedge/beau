@@ -11,15 +11,14 @@ window.switchAdminTab = function (tab) {
     const targetTab = document.getElementById(`tab-${tab}`);
     if (targetTab) targetTab.classList.add('active');
 
-    const bookingsView = document.getElementById('view-bookings');
-    const designersView = document.getElementById('view-designers');
-
-    if (bookingsView) bookingsView.classList.add('hidden');
-    if (designersView) designersView.classList.add('hidden');
+    const views = ['view-bookings', 'view-designers', 'view-groups'];
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.classList.add('hidden');
+    });
 
     const targetView = document.getElementById(`view-${tab}`);
     if (targetView) targetView.classList.remove('hidden');
-    else console.error('View not found:', `view-${tab}`);
 }
 
 async function apiGet(action, params = {}) {
@@ -58,10 +57,12 @@ async function loadData() {
         const stats = await apiGet('getIncomeStats');
         const bookings = await apiGet('getAllBookings');
         const designers = await apiGet('getDesigners');
+        const groups = await apiGet('getSlotGroups');
 
         renderStats(stats);
         renderBookings(bookings);
         renderDesignerAdmin(designers);
+        renderGroupAdmin(groups);
 
         if (loading) {
             loading.classList.add('fade-out');
@@ -114,12 +115,20 @@ function renderBookings(bookings) {
   `).join('');
 }
 
-let designersCache = []; // Store designers locally for easy lookup
+let designersCache = [];
+let groupsCache = [];
 
 function renderDesignerAdmin(designers) {
-    designersCache = designers; // Cache the data
+    designersCache = designers;
     const container = document.getElementById('designer-list-admin');
     if (!container || !designers) return;
+
+    // Update group dropdown in modal
+    const groupSelect = document.getElementById('designerGroupId');
+    if (groupSelect) {
+        groupSelect.innerHTML = '<option value="">-- 手動模式 (使用下方時間設定) --</option>' +
+            groupsCache.map(g => `<option value="${g.GroupID}">${g.Name}</option>`).join('');
+    }
 
     container.innerHTML = designers.map(d => `
         <tr>
@@ -127,7 +136,7 @@ function renderDesignerAdmin(designers) {
             <td><img src="${d.Photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/40'"></td>
             <td><strong>${d.Name}</strong></td>
             <td>${d.Specialty}</td>
-            <td><small>${d.StartHour || '10'}:00 - ${d.EndHour || '20'}:00</small></td>
+            <td><small>${d.GroupID ? '群組: ' + (groupsCache.find(gx => gx.GroupID === d.GroupID)?.Name || d.GroupID) : (d.StartHour || '10') + ':00 - ' + (d.EndHour || '20') + ':00'}</small></td>
             <td><small>${d.OffDays || '--'}</small></td>
             <td><small>${d.SlotInterval || 30}m</small></td>
             <td>
@@ -170,6 +179,7 @@ window.openEditModal = function (id) {
         document.getElementById('designerEndHour').value = d.EndHour || '20';
         document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
         document.getElementById('designerSlotInterval').value = d.SlotInterval || '30';
+        document.getElementById('designerGroupId').value = d.GroupID || '';
         document.getElementById('designerPhoto').value = d.Photo || '';
 
         const modal = document.getElementById('designerModal');
@@ -193,6 +203,7 @@ window.addDesigner = function () {
     document.getElementById('designerEndHour').value = '20';
     document.getElementById('designerOffDays').value = 'Monday';
     document.getElementById('designerSlotInterval').value = '30';
+    document.getElementById('designerGroupId').value = '';
     document.getElementById('designerPhoto').value = '';
     document.getElementById('designerModal').classList.remove('hidden');
 }
@@ -209,6 +220,7 @@ window.saveDesigner = async function () {
     const endHour = document.getElementById('designerEndHour').value;
     const offDays = document.getElementById('designerOffDays').value;
     const slotInterval = document.getElementById('designerSlotInterval').value;
+    const groupId = document.getElementById('designerGroupId').value;
     const photo = document.getElementById('designerPhoto').value;
 
     if (!name || !specialty) {
@@ -217,8 +229,65 @@ window.saveDesigner = async function () {
     }
 
     try {
-        await apiPost('updateDesigner', { id, name, specialty, startHour, endHour, offDays, slotInterval, photo });
+        await apiPost('updateDesigner', { id, name, specialty, startHour, endHour, offDays, slotInterval, groupId, photo });
         closeModal();
+        loadData();
+    } catch (err) {
+        alert('儲存失敗：' + err.message);
+    }
+}
+
+// GROUP MANAGEMENT LOGIC
+function renderGroupAdmin(groups) {
+    groupsCache = groups;
+    const container = document.getElementById('group-list-admin');
+    if (!container || !groups) return;
+
+    container.innerHTML = groups.map(g => `
+        <tr>
+            <td><strong>${g.Name}</strong></td>
+            <td><small>${g.Slots}</small></td>
+            <td>
+                <button class="btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="openGroupModal('${g.GroupID}')">編輯</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+window.openGroupModal = function (id) {
+    if (id) {
+        const g = groupsCache.find(x => x.GroupID === id);
+        if (!g) return;
+        document.getElementById('groupModalTitle').innerText = '編輯時段群組';
+        document.getElementById('editGroupId').value = g.GroupID;
+        document.getElementById('groupName').value = g.Name;
+        document.getElementById('groupSlots').value = g.Slots;
+    } else {
+        document.getElementById('groupModalTitle').innerText = '新增時段群組';
+        document.getElementById('editGroupId').value = '';
+        document.getElementById('groupName').value = '';
+        document.getElementById('groupSlots').value = '10:00,11:00,12:00,14:00,15:00,16:00';
+    }
+    document.getElementById('groupModal').classList.remove('hidden');
+}
+
+window.closeGroupModal = function () {
+    document.getElementById('groupModal').classList.add('hidden');
+}
+
+window.saveSlotGroup = async function () {
+    const id = document.getElementById('editGroupId').value;
+    const name = document.getElementById('groupName').value;
+    const slots = document.getElementById('groupSlots').value;
+
+    if (!name || !slots) {
+        alert('請填寫群組名稱與時段');
+        return;
+    }
+
+    try {
+        await apiPost('updateSlotGroup', { id, name, slots });
+        closeGroupModal();
         loadData();
     } catch (err) {
         alert('儲存失敗：' + err.message);

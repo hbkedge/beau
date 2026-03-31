@@ -219,10 +219,10 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs -->
         <div style="display: flex; gap: 20px; border-bottom: 2px solid rgba(255,255,255,0.05); margin-bottom: 30px;">
             <div class="tab active" onclick="switchAdminTab('bookings')" id="tab-bookings">預約管理</div>
             <div class="tab" onclick="switchAdminTab('designers')" id="tab-designers">人員管理</div>
+            <div class="tab" onclick="switchAdminTab('groups')" id="tab-groups">時段群組管理</div>
         </div>
 
         <!-- Booking List View -->
@@ -279,72 +279,121 @@
                     </table>
                 </div>
             </section>
-        </div>
-    </div>
-
-    <!-- Designer Modal -->
-    <div id="designerModal" class="modal hidden">
-        <div class="modal-content">
-            <h2 id="modalTitle">新增設計師</h2>
-            <input type="hidden" id="editDesignerId">
-            <div class="form-group">
-                <label>姓名</label>
-                <input type="text" id="designerName" placeholder="例如：Alice">
-            </div>
-            <div class="form-group">
-                <label>專業領域</label>
-                <input type="text" id="designerSpecialty" placeholder="例如：專業美甲師">
-            </div>
-            <div class="form-group">
-                <label>休假日</label>
-                <input type="text" id="designerOffDays" placeholder="例如：Monday">
-            </div>
-            <div class="form-group">
-                <label>服務開始時間</label>
-                <select id="designerStartHour"
-                    style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
-                    <option value="8">08:00</option>
-                    <option value="9">09:00</option>
-                    <option value="10" selected>10:00</option>
-                    <option value="11">11:00</option>
-                    <option value="12">12:00</option>
-                    <option value="13">13:00</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>服務結束時間</label>
-                <select id="designerEndHour"
-                    style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
-                    <option value="18">18:00</option>
-                    <option value="19">19:00</option>
-                    <option value="20" selected>20:00</option>
-                    <option value="21">21:00</option>
-                    <option value="22">22:00</option>
-                    <option value="23">23:00</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>時段間隔 (分鐘)</label>
-                <select id="designerSlotInterval"
-                    style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
-                    <option value="30">30 分鐘</option>
-                    <option value="45">45 分鐘</option>
-                    <option value="60">60 分鐘</option>
-                    <option value="90">90 分鐘</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>照片 URL</label>
-                <input type="text" id="designerPhoto" placeholder="https://...">
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 30px;">
-                <button class="btn-primary" onclick="saveDesigner()">儲存資料</button>
-                <button class="btn-primary" style="background: #333;" onclick="closeModal()">取消</button>
+            <!-- Slot Groups View -->
+            <div id="view-groups" class="hidden">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                    <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="openGroupModal()">+
+                        新增時段群組</button>
+                </div>
+                <section class="card" style="padding: 10px;">
+                    <div class="section-title" style="padding: 15px 15px 0 15px;">時段群組清單</div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>群組名稱</th>
+                                    <th>包含時段</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="group-list-admin"></tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </div>
-    </div>
 
-    <script src="admin.js"></script>
+        <!-- Designer Modal -->
+        <div id="designerModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="modalTitle">新增設計師</h2>
+                <input type="hidden" id="editDesignerId">
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="designerName" placeholder="例如：Alice">
+                </div>
+                <div class="form-group">
+                    <label>專業領域</label>
+                    <input type="text" id="designerSpecialty" placeholder="例如：專業美甲師">
+                </div>
+                <div class="form-group">
+                    <label>休假日</label>
+                    <input type="text" id="designerOffDays" placeholder="例如：Monday">
+                </div>
+                <div class="form-group">
+                    <label>所屬時段群組 (套用後將覆蓋手動設定)</label>
+                    <select id="designerGroupId"
+                        style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
+                        <option value="">-- 手動模式 (使用下方時間設定) --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>服務開始時間</label>
+                    <select id="designerStartHour"
+                        style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
+                        <option value="8">08:00</option>
+                        <option value="9">09:00</option>
+                        <option value="10" selected>10:00</option>
+                        <option value="11">11:00</option>
+                        <option value="12">12:00</option>
+                        <option value="13">13:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>服務結束時間</label>
+                    <select id="designerEndHour"
+                        style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
+                        <option value="18">18:00</option>
+                        <option value="19">19:00</option>
+                        <option value="20" selected>20:00</option>
+                        <option value="21">21:00</option>
+                        <option value="22">22:00</option>
+                        <option value="23">23:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>時段間隔 (分鐘)</label>
+                    <select id="designerSlotInterval"
+                        style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white;">
+                        <option value="30">30 分鐘</option>
+                        <option value="45">45 分鐘</option>
+                        <option value="60">60 分鐘</option>
+                        <option value="90">90 分鐘</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>照片 URL</label>
+                    <input type="text" id="designerPhoto" placeholder="https://...">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button class="btn-primary" onclick="saveDesigner()">儲存資料</button>
+                    <button class="btn-primary" style="background: #333;" onclick="closeModal()">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Modal -->
+        <div id="groupModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="groupModalTitle">新增時段群組</h2>
+                <input type="hidden" id="editGroupId">
+                <div class="form-group">
+                    <label>群組名稱</label>
+                    <input type="text" id="groupName" placeholder="例如：早班群組">
+                </div>
+                <div class="form-group">
+                    <label>包含時段 (以半形逗點分隔，如 10:00,11:30,14:00)</label>
+                    <textarea id="groupSlots" rows="4"
+                        style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; color: white; outline: none;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button class="btn-primary" onclick="saveSlotGroup()">儲存群組</button>
+                    <button class="btn-primary" style="background: #333;" onclick="closeGroupModal()">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="admin.js"></script>
 </body>
 
 </html>
