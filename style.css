@@ -3,11 +3,15 @@
  */
 
 :root {
-  --primary: #D4AF37; /* Champagne Gold */
-  --secondary: #1A1A1A; /* Deep Charcoal */
-  --accent: #FFFAF0; /* Floral White */
+  --primary: #D4AF37;
+  /* Champagne Gold */
+  --secondary: #1A1A1A;
+  /* Deep Charcoal */
+  --accent: #FFFAF0;
+  /* Floral White */
   --bg: #0F0F0F;
-  --surface: rgba(255, 255, 255, 0.05); /* Glassmorphism background */
+  --surface: rgba(255, 255, 255, 0.05);
+  /* Glassmorphism background */
   --text: #E0E0E0;
   --text-muted: #A0A0A0;
   --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -34,7 +38,8 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 20px 20px 120px 20px; /* Space for fixed bottom nav and button */
+  padding: 20px 20px 120px 20px;
+  /* Space for fixed bottom nav and button */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -49,7 +54,7 @@ body {
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   transition: var(--transition);
   animation: slideUp 0.6s ease-out forwards;
 }
@@ -145,6 +150,7 @@ h1 {
   color: #666;
   box-shadow: none;
 }
+
 /* Bottom Navigation Bar */
 .bottom-nav {
   position: fixed;
@@ -183,6 +189,7 @@ h1 {
 #app {
   padding-bottom: 90px;
 }
+
 /* Status Badges & Buttons */
 .status-badge {
   padding: 4px 10px;
@@ -192,10 +199,25 @@ h1 {
   text-transform: uppercase;
 }
 
-.pending { background: rgba(212, 175, 55, 0.2); color: #D4AF37; }
-.confirmed { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
-.cancelled { background: rgba(244, 67, 54, 0.2); color: #F44336; }
-.completed { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+.pending {
+  background: rgba(212, 175, 55, 0.2);
+  color: #D4AF37;
+}
+
+.confirmed {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.cancelled {
+  background: rgba(244, 67, 54, 0.2);
+  color: #F44336;
+}
+
+.completed {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+}
 
 .btn-cancel {
   background: transparent;
@@ -228,15 +250,45 @@ h1 {
   text-align: center;
   border-radius: 8px;
   font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.slot:active {
+  transform: scale(0.95);
+}
+
+.slot.selected {
+  background: var(--primary) !important;
+  color: #000 !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.slot.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #222 !important;
+  border-color: #333 !important;
+  color: #666 !important;
 }
 
 /* Animations */
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 /* Status Bar */
 .step-indicator {

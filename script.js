@@ -5,9 +5,11 @@
 const GAS_APP_URL = 'https://script.google.com/macros/s/AKfycbztR_WF-aBLW24jBZFfiUQRdy3QlXlrioAktTvgerIERlHPgQqPUCvDyf-24CdtYXcviA/exec';
 
 let currentStep = 1;
+let allDesigners = []; // Cache for filtering
 let selectedData = {
   designerId: null,
   designerName: null,
+  designerSpecialty: null, // New field for filtering
   serviceName: null,
   date: null,
   time: null,
@@ -93,8 +95,9 @@ async function loadDesigners() {
   const container = document.getElementById('designer-list');
   try {
     const designers = await apiGet('getDesigners');
+    allDesigners = designers; // Save to cache
     container.innerHTML = designers.map(d => `
-      <div class="card designer-card" onclick="selectDesigner('${d.ID}', '${d.Name}')" id="d-${d.ID}">
+      <div class="card designer-card" onclick="selectDesigner('${d.ID}', '${d.Name}', '${d.Specialty}')" id="d-${d.ID}">
         <img src="${d.Photo}" alt="${d.Name}">
         <div style="font-weight: 600;">${d.Name}</div>
         <div style="font-size: 12px; color: grey;">${d.Specialty}</div>
@@ -105,9 +108,10 @@ async function loadDesigners() {
   }
 }
 
-function selectDesigner(id, name) {
+function selectDesigner(id, name, specialty) {
   selectedData.designerId = id;
   selectedData.designerName = name;
+  selectedData.designerSpecialty = specialty;
   document.querySelectorAll('.designer-card').forEach(c => c.classList.remove('selected'));
   document.getElementById(`d-${id}`).classList.add('selected');
   document.getElementById('nextBtn').disabled = false;
@@ -117,7 +121,15 @@ async function loadServices() {
   const container = document.getElementById('service-list');
   try {
     const services = await apiGet('getServices');
-    container.innerHTML = services.map(s => {
+    // FILTER: Service.Category must match Designer.Specialty
+    const filtered = services.filter(s => s.Category === selectedData.designerSpecialty);
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style="padding: 20px; color: grey;">目前無適合 ${selectedData.designerSpecialty} 的服務</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(s => {
       const sanitizedId = s.Name.replace(/\s+/g, '');
       return `
       <div class="card" onclick="selectService('${s.Name}', ${s.Price}, ${s.DurationMin})" id="s-${sanitizedId}">
@@ -158,9 +170,12 @@ async function loadSlots() {
       container.innerHTML = '<div style="grid-column: span 3; text-align: center; color: grey; padding: 20px;">此日期尚無可預約時段</div>';
       return;
     }
-    container.innerHTML = slots.map(s => `
-      <div class="slot" onclick="selectSlot('${s}')" id="t-${s.replace(/[: ]/g, '')}">${s}</div>
-    `).join('');
+    container.innerHTML = slots.map(s => {
+      const cls = s.available ? '' : 'disabled';
+      const attr = s.available ? `onclick="selectSlot('${s.time}')"` : '';
+      const label = s.available ? s.time : `${s.time} (已預訂)`;
+      return `<div class="slot ${cls}" ${attr} id="t-${s.time.replace(/[: ]/g, '')}">${label}</div>`;
+    }).join('');
   } catch (err) { container.innerHTML = '無法加載數據'; }
 }
 
