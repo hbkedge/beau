@@ -30,15 +30,66 @@ async function loadData() {
     try {
         const stats = await apiGet('getIncomeStats');
         const bookings = await apiGet('getAllBookings');
+        const designers = await apiGet('getDesigners');
 
         renderStats(stats);
         renderBookings(bookings);
+        renderDesignerAdmin(designers);
 
         loading.classList.add('fade-out');
         setTimeout(() => loading.classList.add('hidden'), 500);
     } catch (err) {
         alert('載入數據失敗：' + err.message);
         loading.classList.add('hidden');
+    }
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    document.getElementById('view-bookings').classList.add('hidden');
+    document.getElementById('view-designers').classList.add('hidden');
+    document.getElementById(`view-${tab}`).classList.remove('hidden');
+}
+
+function renderDesignerAdmin(designers) {
+    const container = document.getElementById('designer-list-admin');
+    container.innerHTML = designers.map(d => `
+        <tr>
+            <td><small>${d.ID}</small></td>
+            <td><img src="${d.Photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit:cover;"></td>
+            <td><input type="text" value="${d.Name}" onblur="updateDesigner('${d.ID}', 'name', this.value)" style="background:none; color:white; border:none; width:80px;"></td>
+            <td><input type="text" value="${d.Specialty}" onblur="updateDesigner('${d.ID}', 'specialty', this.value)" style="background:none; color:white; border:none; width:120px;"></td>
+            <td>
+                <select onchange="updateDesigner('${d.ID}', 'status', this.value)">
+                    <option value="Active" ${d.Status === 'Active' ? 'selected' : ''}>🟢 在職</option>
+                    <option value="Inactive" ${d.Status === 'Inactive' ? 'selected' : ''}>🔴 離職</option>
+                </select>
+            </td>
+            <td><small style="color:grey;">自動儲存</small></td>
+        </tr>
+    `).join('');
+}
+
+async function updateDesigner(id, field, value) {
+    try {
+        await apiPost('updateDesigner', { id, [field]: value });
+        console.log(`Updated designer ${id} field ${field} to ${value}`);
+    } catch (err) {
+        alert('更新失敗：' + err.message);
+    }
+}
+
+async function addDesigner() {
+    const name = prompt('請輸入設計師姓名：');
+    if (!name) return;
+    const specialty = prompt('請輸入專業領域（如：美甲師）：');
+    try {
+        await apiPost('updateDesigner', { name, specialty });
+        loadData();
+    } catch (err) {
+        alert('新增失敗：' + err.message);
     }
 }
 
