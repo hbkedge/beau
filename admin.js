@@ -123,17 +123,74 @@ function renderDesignerAdmin(designers) {
         <tr>
             <td><small>${d.ID}</small></td>
             <td><img src="${d.Photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/40'"></td>
-            <td><input type="text" value="${d.Name}" onblur="updateDesigner('${d.ID}', 'name', this.value)" style="background:none; color:white; border:none; width:80px;"></td>
-            <td><input type="text" value="${d.Specialty}" onblur="updateDesigner('${d.ID}', 'specialty', this.value)" style="background:none; color:white; border:none; width:120px;"></td>
+            <td>${d.Name}</td>
+            <td>${d.Specialty}</td>
             <td>
-                <select onchange="updateDesigner('${d.ID}', 'status', this.value)">
+                <select onchange="updateDesignerField('${d.ID}', 'status', this.value)">
                     <option value="Active" ${d.Status === 'Active' ? 'selected' : ''}>🟢 在職</option>
                     <option value="Inactive" ${d.Status === 'Inactive' ? 'selected' : ''}>🔴 離職</option>
                 </select>
             </td>
-            <td><small style="color:grey;">自動儲存</small></td>
+            <td>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-primary" style="padding: 5px 10px; font-size: 12px; margin: 0; width: auto;" onclick="openEditModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">編輯</button>
+                    <button class="btn-primary" style="padding: 5px 10px; font-size: 12px; margin: 0; width: auto; background: #c0392b;" onclick="deleteDesigner('${d.ID}')">刪除</button>
+                </div>
+            </td>
         </tr>
     `).join('');
+}
+
+window.openEditModal = function (d) {
+    document.getElementById('modalTitle').innerText = '編輯設計師';
+    document.getElementById('editDesignerId').value = d.ID;
+    document.getElementById('designerName').value = d.Name;
+    document.getElementById('designerSpecialty').value = d.Specialty;
+    document.getElementById('designerPhoto').value = d.Photo;
+    document.getElementById('designerModal').classList.remove('hidden');
+}
+
+window.addDesigner = function () {
+    document.getElementById('modalTitle').innerText = '新增設計師';
+    document.getElementById('editDesignerId').value = '';
+    document.getElementById('designerName').value = '';
+    document.getElementById('designerSpecialty').value = '';
+    document.getElementById('designerPhoto').value = '';
+    document.getElementById('designerModal').classList.remove('hidden');
+}
+
+window.closeModal = function () {
+    document.getElementById('designerModal').classList.add('hidden');
+}
+
+window.saveDesigner = async function () {
+    const id = document.getElementById('editDesignerId').value;
+    const name = document.getElementById('designerName').value;
+    const specialty = document.getElementById('designerSpecialty').value;
+    const photo = document.getElementById('designerPhoto').value;
+
+    if (!name || !specialty) {
+        alert('請填寫姓名與專業領域');
+        return;
+    }
+
+    try {
+        await apiPost('updateDesigner', { id, name, specialty, photo });
+        closeModal();
+        loadData();
+    } catch (err) {
+        alert('儲存失敗：' + err.message);
+    }
+}
+
+window.deleteDesigner = async function (id) {
+    if (!confirm('確定要刪除這位設計師嗎？此操作無法還原。')) return;
+    try {
+        await apiPost('deleteDesigner', { id });
+        loadData();
+    } catch (err) {
+        alert('刪除失敗：' + err.message);
+    }
 }
 
 window.updateStatus = async function (bookingId, status) {
@@ -146,23 +203,11 @@ window.updateStatus = async function (bookingId, status) {
     }
 }
 
-window.updateDesigner = async function (id, field, value) {
+window.updateDesignerField = async function (id, field, value) {
     try {
         await apiPost('updateDesigner', { id, [field]: value });
     } catch (err) {
         alert('更新失敗：' + err.message);
-    }
-}
-
-window.addDesigner = async function () {
-    const name = prompt('請輸入設計師姓名：');
-    if (!name) return;
-    const specialty = prompt('請輸入專業領域（如：美甲師）：');
-    try {
-        await apiPost('updateDesigner', { name, specialty });
-        loadData();
-    } catch (err) {
-        alert('新增失敗：' + err.message);
     }
 }
 

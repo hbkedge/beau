@@ -126,6 +126,55 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
     </style>
 </head>
 
@@ -227,6 +276,30 @@
                     </table>
                 </div>
             </section>
+        </div>
+    </div>
+
+    <!-- Designer Modal -->
+    <div id="designerModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">新增設計師</h2>
+            <input type="hidden" id="editDesignerId">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="designerName" placeholder="例如：Alice">
+            </div>
+            <div class="form-group">
+                <label>專業領域</label>
+                <input type="text" id="designerSpecialty" placeholder="例如：專業美甲師">
+            </div>
+            <div class="form-group">
+                <label>照片 URL</label>
+                <input type="text" id="designerPhoto" placeholder="https://...">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn-primary" onclick="saveDesigner()">儲存資料</button>
+                <button class="btn-primary" style="background: #333;" onclick="closeModal()">取消</button>
+            </div>
         </div>
     </div>
 
