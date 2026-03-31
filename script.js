@@ -121,21 +121,25 @@ async function loadServices() {
   const container = document.getElementById('service-list');
   try {
     const services = await apiGet('getServices');
-    // FUZZY MATCH: Allow matching "美甲" with "美甲師"
-    const filtered = services.filter(s => {
+
+    // FUZZY MATCH: Standardized keys from Version 14 Backend
+    let filtered = services.filter(s => {
       const cat = (s.Category || "").trim();
       const spec = (selectedData.designerSpecialty || "").trim();
       return cat.includes(spec) || spec.includes(cat);
     });
 
+    let isFallback = false;
     if (filtered.length === 0) {
-      container.innerHTML = `<div style="padding: 20px; color: grey;">目前無適合 ${selectedData.designerSpecialty} 的服務<br><small>請確認分類是否正確</small></div>`;
-      return;
+      console.warn("No specific services found for:", selectedData.designerSpecialty, ". Showing all services as fallback.");
+      filtered = services; // FALLBACK: Show all if no match found
+      isFallback = true;
     }
 
-    container.innerHTML = filtered.map(s => {
-      const sanitizedId = s.Name.replace(/\s+/g, '');
-      return `
+    container.innerHTML = (isFallback ? `<div style="font-size:12px; color:var(--primary); margin-bottom:10px; text-align:center;">⚠️ 顯示全部服務 (未找到 ${selectedData.designerSpecialty} 專屬項目)</div>` : '') +
+      filtered.map(s => {
+        const sanitizedId = s.Name.replace(/\s+/g, '');
+        return `
       <div class="card" onclick="selectService('${s.Name}', ${s.Price}, ${s.DurationMin})" id="s-${sanitizedId}">
         <div style="font-weight: 600;">${s.Name}</div>
         <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 8px;">
@@ -144,7 +148,7 @@ async function loadServices() {
         </div>
       </div>
     `;
-    }).join('');
+      }).join('');
   } catch (err) { container.innerHTML = '無法加載數據'; }
 }
 
