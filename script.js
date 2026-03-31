@@ -7,6 +7,7 @@ const GAS_APP_URL = 'https://script.google.com/macros/s/AKfycbztR_WF-aBLW24jBZFf
 let currentStep = 1;
 let selectedData = {
   designerId: null,
+  designerName: null,
   serviceName: null,
   date: null,
   time: null,
@@ -106,6 +107,7 @@ async function loadDesigners() {
 
 function selectDesigner(id, name) {
   selectedData.designerId = id;
+  selectedData.designerName = name;
   document.querySelectorAll('.designer-card').forEach(c => c.classList.remove('selected'));
   document.getElementById(`d-${id}`).classList.add('selected');
   document.getElementById('nextBtn').disabled = false;
@@ -143,11 +145,21 @@ async function loadSlots() {
   const container = document.getElementById('slot-list');
   const dateStr = document.getElementById('dateInput').value;
   if (!dateStr) return;
+
+  // Clear previous selection when date changes
   selectedData.date = dateStr;
+  selectedData.time = null;
+  document.getElementById('nextBtn').disabled = true;
+  container.innerHTML = '<div style="grid-column: span 3; text-align: center; color: grey;">載入時段中...</div>';
+
   try {
     const slots = await apiGet('getAvailableSlots', { designerId: selectedData.designerId, date: dateStr });
+    if (slots.length === 0) {
+      container.innerHTML = '<div style="grid-column: span 3; text-align: center; color: grey; padding: 20px;">此日期尚無可預約時段</div>';
+      return;
+    }
     container.innerHTML = slots.map(s => `
-      <div class="slot" onclick="selectSlot('${s}')" id="t-${s.replace(':', '')}">${s}</div>
+      <div class="slot" onclick="selectSlot('${s}')" id="t-${s.replace(/[: ]/g, '')}">${s}</div>
     `).join('');
   } catch (err) { container.innerHTML = '無法加載數據'; }
 }
@@ -155,7 +167,9 @@ async function loadSlots() {
 function selectSlot(time) {
   selectedData.time = time;
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-  document.getElementById(`t-${time.replace(':', '')}`).classList.add('selected');
+  const targetId = `t-${time.replace(/[: ]/g, '')}`;
+  const el = document.getElementById(targetId);
+  if (el) el.classList.add('selected');
   document.getElementById('nextBtn').disabled = false;
 }
 
@@ -233,7 +247,7 @@ function showSummary() {
   container.innerHTML = `
     <div class="card" style="border: none; background: rgba(255,255,255,0.02); padding: 5px 0;">
       <small style="color: grey;">設計師</small>
-      <div style="font-weight: 600;">${selectedData.designerId}</div>
+      <div style="font-weight: 600;">${selectedData.designerName || selectedData.designerId}</div>
     </div>
     <div class="card" style="border: none; background: rgba(255,255,255,0.02); padding: 5px 0;">
       <small style="color: grey;">服務項目</small>
