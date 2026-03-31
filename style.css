@@ -340,8 +340,17 @@ h1 {
   transition: var(--transition);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: var(--primary);
+  outline: none;
+}
+
+/* Custom select options */
+select option {
+  background: #222;
+  color: white;
+  padding: 10px;
 }
 
 /* Status Bar */
