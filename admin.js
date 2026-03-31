@@ -125,6 +125,8 @@ function renderDesignerAdmin(designers) {
             <td><img src="${d.Photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/40'"></td>
             <td>${d.Name}</td>
             <td>${d.Specialty}</td>
+            <td><small>${d.WorkingHours || '--'}</small></td>
+            <td><small>${d.OffDays || '--'}</small></td>
             <td>
                 <select onchange="updateDesignerField('${d.ID}', 'status', this.value)">
                     <option value="Active" ${d.Status === 'Active' ? 'selected' : ''}>🟢 在職</option>
@@ -146,6 +148,8 @@ window.openEditModal = function (d) {
     document.getElementById('editDesignerId').value = d.ID;
     document.getElementById('designerName').value = d.Name;
     document.getElementById('designerSpecialty').value = d.Specialty;
+    document.getElementById('designerWorkingHours').value = d.WorkingHours || '10:00-20:00';
+    document.getElementById('designerOffDays').value = d.OffDays || 'Monday';
     document.getElementById('designerPhoto').value = d.Photo;
     document.getElementById('designerModal').classList.remove('hidden');
 }
@@ -155,6 +159,8 @@ window.addDesigner = function () {
     document.getElementById('editDesignerId').value = '';
     document.getElementById('designerName').value = '';
     document.getElementById('designerSpecialty').value = '';
+    document.getElementById('designerWorkingHours').value = '10:00-20:00';
+    document.getElementById('designerOffDays').value = 'Monday';
     document.getElementById('designerPhoto').value = '';
     document.getElementById('designerModal').classList.remove('hidden');
 }
@@ -167,6 +173,8 @@ window.saveDesigner = async function () {
     const id = document.getElementById('editDesignerId').value;
     const name = document.getElementById('designerName').value;
     const specialty = document.getElementById('designerSpecialty').value;
+    const workingHours = document.getElementById('designerWorkingHours').value;
+    const offDays = document.getElementById('designerOffDays').value;
     const photo = document.getElementById('designerPhoto').value;
 
     if (!name || !specialty) {
@@ -175,7 +183,7 @@ window.saveDesigner = async function () {
     }
 
     try {
-        await apiPost('updateDesigner', { id, name, specialty, photo });
+        await apiPost('updateDesigner', { id, name, specialty, workingHours, offDays, photo });
         closeModal();
         loadData();
     } catch (err) {
